@@ -3,65 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Three‑Body Simulation — Plain JS + three.js (3D)</title>
-  <style>
-    :root {
-      --bg: #05060a;
-      --panel: #0e0f14;
-      --muted: #b3b7c2;
-      --border: #232634;
-      --accent: #7c8cff;
-      --c1: #ffd166;
-      --c2: #66e3ff;
-      --c3: #ff66c4;
-    }
-    html, body { height: 100%; margin: 0; background: #000; color: #e6e8ee; font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
-    #app { position: fixed; inset: 0; overflow: hidden; }
-    canvas { display: block; }
-    .panel {
-      position: absolute; left: 50%; transform: translateX(-50%);
-      top: 12px; width: min(1100px, calc(100% - 24px));
-      background: color-mix(in srgb, var(--panel) 75%, transparent);
-      backdrop-filter: blur(6px);
-      border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; box-shadow: 0 10px 30px rgba(0,0,0,.35);
-      pointer-events: auto; z-index: 10;
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-    .panel.hidden { opacity: 0; transform: translateX(-50%) translateY(-10px); pointer-events: none; }
-    .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .card { border: 1px solid var(--border); border-radius: 12px; padding: 8px; background: #11131a88; }
-    .card h3 { margin: 0 0 6px 0; font-size: 13px; color: #d8dbff; }
-    label { font-size: 11px; color: var(--muted); display:grid; grid-template-columns: 120px 1fr; align-items:center; gap:8px; }
-    input[type=number] { width: 100%; box-sizing: border-box; background: #0b0d15; color: #e6e8ee; border: 1px solid #2a2d3a; border-radius: 8px; padding: 6px 8px; margin: 2px 0 6px; }
-    input[type=range] { width: 100%; }
-    button { cursor: pointer; border: 1px solid #2a2d3a; background: #121523; color:#e8eaff; border-radius: 10px; padding: 8px 10px; }
-    button:hover { border-color: #3a3f55; background: #171b2d; }
-    .btn-accent { background: #2a2fff; border-color: #464bff; }
-    .btn-accent:hover { background: #353bff; }
-    .muted { color: var(--muted); font-size: 12px; }
-    .footer { position: absolute; right: 10px; bottom: 10px; color:#9196a9; font-size: 10px; }
-    @media (max-width: 1100px) { .row { grid-template-columns: 1fr; } label{grid-template-columns:100px 1fr;} }
-    .tests { margin-top: 6px; font-size: 12px; color: #c7d0ff; }
-    .tests pre { background: #0c0f1a; border: 1px solid #2a2d3a; padding: 6px 8px; border-radius: 8px; max-height: 160px; overflow:auto; }
-    #togglePanel { position: absolute; top: 10px; right: 10px; z-index: 20; background: #121523cc; border: 1px solid #2a2d3a; color: #e6e8ee; border-radius: 8px; padding: 6px 10px; }
-    #togglePanel:hover { background: #171b2d; }
-    .legend { display: flex; align-items: center; gap: 10px; }
-    .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #d8dbff; background: #0c0f1a; border: 1px solid #2a2d3a; padding: 3px 8px; border-radius: 999px; }
-    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; box-shadow: 0 0 6px currentColor; }
-    .c1 { color: var(--c1); }
-    .c2 { color: var(--c2); }
-    .c3 { color: var(--c3); }
-  </style>
+  <title>Three-Body Simulation — Plain JS + three.js (3D)</title>
+  <link rel="preconnect" href="https://esm.sh">
+  <link rel="stylesheet" href="./3body.css">
 </head>
 <body>
 <div id="app"></div>
 <button id="togglePanel">Hide Controls</button>
 
 <div class="panel" id="dashboard">
-  <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding: 2px 4px 8px;">
-    <div style="display:flex; align-items:center; gap:14px;">
-      <div style="font-weight:600;">Three‑Body Playground — Plain JS + three.js — <strong>3D</strong></div>
-      <div class="legend" aria-label="Color legend for bodies">
+  <div class="panel-header">
+    <div class="panel-title">
+      <div class="title">Three-Body Playground — Plain JS + three.js — <strong>3D</strong></div>
+      <div class="legend">
         <span class="chip" id="legend1" title="Body 1"><span class="dot c1"></span>Body 1</span>
         <span class="chip" id="legend2" title="Body 2"><span class="dot c2"></span>Body 2</span>
         <span class="chip" id="legend3" title="Body 3"><span class="dot c3"></span>Body 3</span>
@@ -70,7 +24,7 @@
     <div class="muted">Energy: <span id="energy">…</span> AU²·M☉/day²</div>
   </div>
 
-  <div class="row" style="margin-top: 6px;">
+  <div class="row">
     <div class="card">
       <h3>Body 1</h3>
       <label>Mass (M☉) <input type="number" id="m0" step="0.0001"></label>
@@ -103,402 +57,41 @@
     </div>
   </div>
 
-  <div class="row" style="margin-top: 10px;">
+  <div class="row">
     <div class="card">
       <h3>Controls</h3>
-      <label>Time scale (×)
-        <input type="range" id="timescale" min="0.1" max="50" step="0.1">
-      </label>
-      <label>Trail length
-        <input type="range" id="traillen" min="100" max="10000" step="50">
-      </label>
-      <label>Softening (AU)
-        <input type="range" id="softening" min="0.00000001" max="0.001" step="0.00000001">
-      </label>
-      <div style="display:flex; gap:8px; margin-top:8px;">
+      <label>Time scale (×) <input type="range" id="timescale" min="0.1" max="50" step="0.1"></label>
+      <label>Trail length <input type="range" id="traillen" min="100" max="10000" step="50"></label>
+      <label>Softening (AU) <input type="range" id="softening" min="0.00000001" max="0.001" step="0.00000001"></label>
+      <div class="btn-row">
         <button id="pause">Pause/Resume</button>
         <button id="reset">Reset (apply edits)</button>
-        <button id="selftest">Run self‑test</button>
+        <button id="selftest">Run self-test</button>
+        <button id="copyjson" class="btn-accent">Copy Init JSON</button>
       </div>
     </div>
     <div class="card">
       <h3>Presets</h3>
-      <div style="display:flex; flex-direction:column; gap:6px;">
+      <div class="preset-col">
         <button class="btn-accent" data-preset="sun-earth-jupiter">Sun–Earth–Jupiter (scaled)</button>
-        <button data-preset="triangle">Equal‑mass triangle (3D variant)</button>
-        <button data-preset="figure8">Choreography — figure‑eight (in‑plane)</button>
+        <button data-preset="triangle">Equal-mass triangle (3D variant)</button>
+        <button data-preset="figure8">Choreography — figure-eight (in-plane)</button>
       </div>
-      <p class="muted" style="margin-top:6px;">Units: AU, AU/day, M☉. Z inputs enable true 3D motion.</p>
+      <p class="muted">Units: AU, AU/day, M☉. Z inputs enable true 3D motion.</p>
     </div>
     <div class="card">
-      <h3>Diagnostics</h3>
-      <div class="tests">
-        <pre id="testlog">(no tests run)</pre>
-      </div>
+      <h3>Diagnostics / JSON</h3>
+      <pre id="testlog" class="testlog">(no tests run)</pre>
+      <textarea id="jsonbox" class="jsonbox" placeholder="Init JSON will appear here when you click ‘Copy Init JSON’" readonly></textarea>
     </div>
   </div>
 </div>
 
-<div class="footer">G = 2.959122082855911e‑4 AU³/(M☉·day²) — Background star sphere follows camera</div>
+<div class="footer">
+  <div class="badge">Sim time: <span id="simtime">0.0 d (0.0000 yr)</span></div>
+  <div class="badge">G = 2.959122082855911e-4 AU³/(M☉·day²)</div>
+</div>
 
-<script type="module">
-  const start = (fn)=> (document.readyState === 'loading') ? document.addEventListener('DOMContentLoaded', fn, { once:true }) : fn();
-
-  import * as THREE from 'https://esm.sh/three@0.162.0'
-  import { OrbitControls } from 'https://esm.sh/three@0.162.0/examples/jsm/controls/OrbitControls.js'
-  import { EffectComposer } from 'https://esm.sh/three@0.162.0/examples/jsm/postprocessing/EffectComposer.js'
-  import { RenderPass } from 'https://esm.sh/three@0.162.0/examples/jsm/postprocessing/RenderPass.js'
-  import { UnrealBloomPass } from 'https://esm.sh/three@0.162.0/examples/jsm/postprocessing/UnrealBloomPass.js'
-
-  start(() => {
-    // --- helpers & state ---
-    const $ = (id)=>document.getElementById(id)
-    const energyEl = $('energy')
-    const testlog = $('testlog')
-
-    // HUD toggle must wire first
-    const toggleBtn = $('togglePanel')
-    const dashboard = $('dashboard')
-    toggleBtn.addEventListener('click', () => {
-      dashboard.classList.toggle('hidden')
-      toggleBtn.textContent = dashboard.classList.contains('hidden') ? 'Show Controls' : 'Hide Controls'
-    })
-
-    // ======= Physics (3D) =======
-    const G = 2.959122082855911e-4
-    class ThreeBodyRK4_3D {
-      constructor(masses, pos, vel, softening = 1e-6) {
-        this.m = Float64Array.from(masses)
-        this.state = new Float64Array(18)
-        for (let i = 0; i < 3; i++) {
-          this.state[3 * i + 0] = pos[i][0]
-          this.state[3 * i + 1] = pos[i][1]
-          this.state[3 * i + 2] = pos[i][2]
-          this.state[9 + 3 * i + 0] = vel[i][0]
-          this.state[9 + 3 * i + 1] = vel[i][1]
-          this.state[9 + 3 * i + 2] = vel[i][2]
-        }
-        this.soft2 = softening * softening
-      }
-      deriv(out, s) {
-        for (let i=0;i<9;i++) out[i] = s[9+i]
-        for (let i=0;i<3;i++) {
-          let ax=0, ay=0, az=0
-          const xi=s[3*i], yi=s[3*i+1], zi=s[3*i+2]
-          for (let j=0;j<3;j++) if (j!==i) {
-            const xj=s[3*j], yj=s[3*j+1], zj=s[3*j+2]
-            const dx = xi-xj, dy = yi-yj, dz = zi-zj
-            const r2 = dx*dx + dy*dy + dz*dz + this.soft2
-            const invR3 = 1.0 / Math.pow(r2, 1.5)
-            const f = -G * this.m[j] * invR3
-            ax += f * dx; ay += f * dy; az += f * dz
-          }
-          out[9+3*i+0] = ax
-          out[9+3*i+1] = ay
-          out[9+3*i+2] = az
-        }
-      }
-      step(dt) {
-        const n = 18
-        const s = this.state
-        const k1 = new Float64Array(n)
-        const k2 = new Float64Array(n)
-        const k3 = new Float64Array(n)
-        const k4 = new Float64Array(n)
-        this.deriv(k1, s)
-        const s2 = new Float64Array(n)
-        for (let i=0;i<n;i++) s2[i] = s[i] + 0.5*dt*k1[i]
-        this.deriv(k2, s2)
-        const s3 = new Float64Array(n)
-        for (let i=0;i<n;i++) s3[i] = s[i] + 0.5*dt*k2[i]
-        this.deriv(k3, s3)
-        const s4 = new Float64Array(n)
-        for (let i=0;i<n;i++) s4[i] = s[i] + dt*k3[i]
-        this.deriv(k4, s4)
-        for (let i=0;i<n;i++) s[i] += (dt/6)*(k1[i] + 2*k2[i] + 2*k3[i] + k4[i])
-      }
-      energy() {
-        const s = this.state, m = this.m
-        let K = 0
-        for (let i=0;i<3;i++) {
-          const vx=s[9+3*i], vy=s[9+3*i+1], vz=s[9+3*i+2]
-          K += 0.5*m[i]*(vx*vx+vy*vy+vz*vz)
-        }
-        const U = (i,j)=>{
-          const dx=s[3*i]-s[3*j], dy=s[3*i+1]-s[3*j+1], dz=s[3*i+2]-s[3*j+2]
-          const r=Math.sqrt(dx*dx+dy*dy+dz*dz + this.soft2)
-          return -G * m[i]*m[j] / r
-        }
-        return K + U(0,1) + U(0,2) + U(1,2)
-      }
-    }
-
-    // ======= Presets (3D) =======
-    const PRESETS = {
-      'sun-earth-jupiter': {
-        masses: [1.0, 3.003e-6 * 1000, 0.000954 * 1.2],
-        pos: [[0,0,0],[1.0,0,0],[5.2,0,0]],
-        vel: [[0,0,0],[0,0.0172*1.1,0],[0,0.0074*1.1,0]],
-      },
-      'triangle': {
-        masses: [1,1,1],
-        pos: [[-0.8,0,0.2],[0.4,0.692820323,-0.1],[0.4,-0.692820323,-0.1]],
-        vel: [[0,0.0055,0],[-0.0048,-0.00275,0.002],[0.0048,-0.00275,-0.002]],
-      },
-      'figure8': {
-        masses: [1,1,1],
-        pos: [[0.97000436,-0.24308753,0],[-0.97000436,0.24308753,0],[0,0,0]],
-        vel: [[0.466203685,0.43236573,0],[0.466203685,0.43236573,0],[-0.93240737,-0.86473146,0]],
-      }
-    }
-
-    // ======= UI params & binding =======
-    const params = {
-      masses: [1, 0.001, 0.001],
-      pos: [[0,0,0],[1,0,0],[5.2,0,0]],
-      vel: [[0,0,0],[0,0.0172,0],[0,0.0074,0]],
-      timeScale: 5,
-      trailLen: 2500,
-      softening: 1e-6,
-    }
-
-    function bindInputs() {
-      ;['m0','m1','m2'].forEach((id,i)=> $(id).value = params.masses[i])
-      ;['x0','x1','x2'].forEach((id,i)=> $(id).value = params.pos[i][0])
-      ;['y0','y1','y2'].forEach((id,i)=> $(id).value = params.pos[i][1])
-      ;['z0','z1','z2'].forEach((id,i)=> $(id).value = params.pos[i][2])
-      ;['vx0','vx1','vx2'].forEach((id,i)=> $(id).value = params.vel[i][0])
-      ;['vy0','vy1','vy2'].forEach((id,i)=> $(id).value = params.vel[i][1])
-      ;['vz0','vz1','vz2'].forEach((id,i)=> $(id).value = params.vel[i][2])
-      $('timescale').value = params.timeScale
-      $('traillen').value = params.trailLen
-      $('softening').value = params.softening
-    }
-
-    function readInputsIntoParams() {
-      params.masses = ['m0','m1','m2'].map(id=> parseFloat($(id).value))
-      params.pos = [0,1,2].map(i=> [parseFloat($('x'+i).value), parseFloat($('y'+i).value), parseFloat($('z'+i).value)])
-      params.vel = [0,1,2].map(i=> [parseFloat($('vx'+i).value), parseFloat($('vy'+i).value), parseFloat($('vz'+i).value)])
-      params.timeScale = parseFloat($('timescale').value)
-      params.trailLen = parseInt($('traillen').value)
-      params.softening = parseFloat($('softening').value)
-    }
-
-    function applyPreset(key) {
-      const p = PRESETS[key]
-      params.masses = p.masses.map(x=>x)
-      params.pos = p.pos.map(r=>[r[0],r[1],r[2]])
-      params.vel = p.vel.map(u=>[u[0],u[1],u[2]])
-      bindInputs()
-      rebuildEngine()
-      paused = false
-    }
-
-    // ======= three.js scene =======
-    const app = $('app')
-    const scene = new THREE.Scene()
-
-    // Starfield sky that rotates with camera movement
-    function makeStarTexture({w=4096,h=2048,count=14000}={}){
-      const c = document.createElement('canvas'); c.width=w; c.height=h
-      const g = c.getContext('2d')
-      g.fillStyle = '#000'; g.fillRect(0,0,w,h)
-      for (let i=0;i<count;i++){
-        const x = Math.random()*w, y = Math.random()*h
-        const r = Math.random()*1.2 + 0.2
-        const a = 0.6 + 0.4*Math.random()
-        const hue = 210 + 60*(Math.random()-0.5)
-        g.fillStyle = `hsla(${hue}, 80%, ${70+20*(Math.random()-0.5)}%, ${a})`
-        g.beginPath(); g.arc(x,y,r,0,Math.PI*2); g.fill()
-      }
-      const tex = new THREE.CanvasTexture(c)
-      tex.wrapS = THREE.RepeatWrapping
-      tex.wrapT = THREE.ClampToEdgeWrapping
-      tex.anisotropy = 8
-      return tex
-    }
-    const starTex = makeStarTexture()
-    const skyGeo = new THREE.SphereGeometry(1000, 64, 64)
-    const skyMat = new THREE.MeshBasicMaterial({ map: starTex, side: THREE.BackSide, depthWrite: false })
-    const sky = new THREE.Mesh(skyGeo, skyMat)
-    scene.add(sky)
-
-    const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.01, 2000)
-    camera.position.set(0, 5, 18)
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' })
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-    renderer.setSize(window.innerWidth, window.innerHeight)
-    app.appendChild(renderer.domElement)
-
-    const controls = new OrbitControls(camera, renderer.domElement)
-    controls.enableDamping = true
-    controls.dampingFactor = 0.08
-    controls.rotateSpeed = 0.7
-    controls.zoomSpeed = 0.8
-    controls.panSpeed = 0.5
-
-    // Lights
-    scene.add(new THREE.AmbientLight(0xffffff, 0.5))
-    const keyL = new THREE.PointLight(0xffffff, 1.2)
-    keyL.position.set(10,10,10)
-    scene.add(keyL)
-    const fillL = new THREE.PointLight(0xffffff, 0.6)
-    fillL.position.set(-10,-10,-5)
-    scene.add(fillL)
-
-    // Bodies
-    const colors = [getComputedStyle(document.documentElement).getPropertyValue('--c1').trim(),
-      getComputedStyle(document.documentElement).getPropertyValue('--c2').trim(),
-      getComputedStyle(document.documentElement).getPropertyValue('--c3').trim()]
-    const radii = [0.5, 0.3, 0.35]
-    const bodies = []
-    for (let i=0;i<3;i++) {
-      const geo = new THREE.SphereGeometry(radii[i], 32, 32)
-      const color = new THREE.Color(colors[i])
-      const mat = new THREE.MeshPhysicalMaterial({ roughness: 0.35, metalness: 0.1, color, emissive: color, emissiveIntensity: 0.6, clearcoat: 0.3 })
-      const mesh = new THREE.Mesh(geo, mat)
-      scene.add(mesh)
-      bodies.push(mesh)
-    }
-
-    // Trails
-    const trails = []
-    for (let i=0;i<3;i++) {
-      const geom = new THREE.BufferGeometry()
-      const seed = new Float32Array([0,0,0])
-      geom.setAttribute('position', new THREE.BufferAttribute(seed, 3))
-      const mat = new THREE.LineBasicMaterial({ color: new THREE.Color(colors[i]), transparent: true, opacity: 0.9 })
-      const line = new THREE.Line(geom, mat)
-      scene.add(line)
-      trails.push({ line, points: Array.from(seed) })
-    }
-
-    // Grid helper (subtle)
-    const grid = new THREE.GridHelper(50, 50, 0x334, 0x224)
-    grid.material.opacity = 0.2; grid.material.transparent = true
-    scene.add(grid)
-
-    // Postprocessing
-    const composer = new EffectComposer(renderer)
-    composer.addPass(new RenderPass(scene, camera))
-    const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.6, 0.9, 0.2)
-    composer.addPass(bloom)
-
-    window.addEventListener('resize', ()=>{
-      camera.aspect = window.innerWidth / window.innerHeight
-      camera.updateProjectionMatrix()
-      renderer.setSize(window.innerWidth, window.innerHeight)
-      composer.setSize(window.innerWidth, window.innerHeight)
-    })
-
-    // Engine
-    let engine = null
-    let paused = false
-
-    function rebuildEngine() {
-      readInputsIntoParams()
-      engine = new ThreeBodyRK4_3D(params.masses, params.pos, params.vel, params.softening)
-      updateEnergy(engine.energy())
-      const s = engine.state
-      const pos = [ [s[0],s[1],s[2]], [s[3],s[4],s[5]], [s[6],s[7],s[8]] ]
-      for (let i=0;i<3;i++) {
-        bodies[i].position.set(pos[i][0], pos[i][1], pos[i][2])
-        trails[i].points = [pos[i][0], pos[i][1], pos[i][2]]
-        trails[i].line.geometry.setAttribute('position', new THREE.Float32BufferAttribute(trails[i].points, 3))
-      }
-    }
-
-    function updateEnergy(val) {
-      energyEl.textContent = Number.isFinite(val) ? val.toExponential(6) : '—'
-    }
-
-    function updateTrail(i, x, y, z) {
-      const t = trails[i]
-      t.points.push(x, y, z)
-      if (t.points.length/3 > params.trailLen) t.points.splice(0, 3)
-      t.line.geometry.setAttribute('position', new THREE.Float32BufferAttribute(t.points, 3))
-    }
-
-    // Animation loop
-    const clock = new THREE.Clock()
-    function animate() {
-      requestAnimationFrame(animate)
-      const delta = clock.getDelta()
-      controls.update()
-
-      // keep star sphere centered on camera so it rotates as you orbit (no parallax)
-      sky.position.copy(camera.position)
-
-      if (engine && !paused) {
-        const subSteps = 4
-        const dt = (delta * params.timeScale) / subSteps
-        for (let i=0;i<subSteps;i++) engine.step(dt)
-        const s = engine.state
-        const pos = [ [s[0],s[1],s[2]],[s[3],s[4],s[5]],[s[6],s[7],s[8]] ]
-        for (let i=0;i<3;i++) {
-          bodies[i].position.set(pos[i][0], pos[i][1], pos[i][2])
-          updateTrail(i, pos[i][0], pos[i][1], pos[i][2])
-        }
-        if (clock.elapsedTime % 0.25 < delta) updateEnergy(engine.energy())
-      }
-      composer.render()
-    }
-
-    // ======= Wire UI events (single source of truth) =======
-    $('pause').addEventListener('click', ()=> paused = !paused)
-    $('reset').addEventListener('click', rebuildEngine)
-    $('timescale').addEventListener('input', ()=> params.timeScale = parseFloat($('timescale').value))
-    $('traillen').addEventListener('input', ()=> params.trailLen = parseInt($('traillen').value))
-    $('softening').addEventListener('input', ()=> params.softening = parseFloat($('softening').value))
-    document.querySelectorAll('[data-preset]').forEach(btn=> btn.addEventListener('click', e=> applyPreset(e.currentTarget.dataset.preset)))
-
-    function log(line){ testlog.textContent += `\n${line}` }
-    function clearLog(){ testlog.textContent = '' }
-    function approxEqual(a,b,eps){ return Math.abs(a-b) <= eps * Math.max(1, Math.abs(a), Math.abs(b)) }
-
-    function runSelfTests(){
-      clearLog()
-      log('Running tests…')
-      const ids = ['m0','m1','m2','x0','y0','z0','vx0','vy0','vz0','timescale','traillen','softening','legend1','legend2','legend3','pause','reset','selftest','togglePanel']
-      const missing = ids.filter(id => !$(id))
-      const pass0 = missing.length === 0
-      log(`Test 0 (DOM ids present): ${pass0 ? 'PASS' : 'FAIL'}${pass0 ? '' : ' missing=' + missing.join(',')}`)
-
-      const P = PRESETS['figure8']
-      const eng = new ThreeBodyRK4_3D(P.masses, P.pos, P.vel, 1e-6)
-      const E0 = eng.energy()
-      for (let i=0;i<200;i++) eng.step(0.01)
-      const E1 = eng.energy()
-      const rel = Math.abs((E1 - E0) / E0)
-      const pass1 = rel < 1e-3
-      log(`Test 1 (energy drift < 1e-3): ${pass1 ? 'PASS' : 'FAIL'} (rel=${rel.toExponential(3)})`)
-
-      applyPreset('triangle')
-      const z0v = parseFloat($('z0').value)
-      const expectedZ0 = PRESETS['triangle'].pos[0][2]
-      const pass2 = approxEqual(z0v, expectedZ0, 1e-12)
-      log(`Test 2 (preset z -> inputs): ${pass2 ? 'PASS' : 'FAIL'} (z0=${z0v}, expected=${expectedZ0})`)
-
-      rebuildEngine()
-      const meshX = bodies[0].position.x
-      const expectedX0 = PRESETS['triangle'].pos[0][0]
-      const pass3 = approxEqual(meshX, expectedX0, 1e-12)
-      log(`Test 3 (rebuild -> mesh.x): ${pass3 ? 'PASS' : 'FAIL'} (x=${meshX})`)
-
-      // Sky follows camera position
-      const pass4 = sky.position.distanceTo(camera.position) < 1e-9
-      log(`Test 4 (sky follows camera): ${pass4 ? 'PASS' : 'FAIL'}`)
-    }
-
-    $('selftest').addEventListener('click', runSelfTests)
-
-    // Start!
-    applyPreset('sun-earth-jupiter')
-    bindInputs()
-    rebuildEngine()
-    animate()
-  })
-</script>
+<script type="module" src="./app.js"></script>
 </body>
 </html>
