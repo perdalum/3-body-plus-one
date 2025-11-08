@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Three-Body Simulation — Plain JS + three.js (3D)</title>
+  <title>Four-Body (Tri-star + Planet) — Plain JS + three.js</title>
   <link rel="preconnect" href="https://esm.sh">
   <link rel="stylesheet" href="./3body.css">
 </head>
@@ -14,11 +14,12 @@
 <div class="panel" id="dashboard">
   <div class="panel-header">
     <div class="panel-title">
-      <div class="title">Three-Body Playground — Plain JS + three.js — <strong>3D</strong></div>
+      <div class="title">Four-Body Playground — Plain JS + three.js — <strong>3D</strong></div>
       <div class="legend">
         <span class="chip" id="legend1" title="Body 1"><span class="dot c1"></span>Body 1</span>
         <span class="chip" id="legend2" title="Body 2"><span class="dot c2"></span>Body 2</span>
         <span class="chip" id="legend3" title="Body 3"><span class="dot c3"></span>Body 3</span>
+        <span class="chip" id="legend4" title="Body 4 (planet)"><span class="dot c4"></span>Body 4</span>
       </div>
     </div>
     <div class="muted">Energy: <span id="energy">…</span> AU²·M☉/day²</div>
@@ -27,33 +28,43 @@
   <div class="row">
     <div class="card">
       <h3>Body 1</h3>
-      <label>Mass (M☉) <input type="number" id="m0" step="0.0001"></label>
+      <label>Mass (M☉) <input type="number" id="m0" step="0.000001"></label>
       <label>x (AU) <input type="number" id="x0" step="0.001"></label>
       <label>y (AU) <input type="number" id="y0" step="0.001"></label>
-      <label>z (AU) <input type="number" id="z0" step="0.001" value="0"></label>
+      <label>z (AU) <input type="number" id="z0" step="0.001"></label>
       <label>vx (AU/day) <input type="number" id="vx0" step="0.0001"></label>
       <label>vy (AU/day) <input type="number" id="vy0" step="0.0001"></label>
-      <label>vz (AU/day) <input type="number" id="vz0" step="0.0001" value="0"></label>
+      <label>vz (AU/day) <input type="number" id="vz0" step="0.0001"></label>
     </div>
     <div class="card">
       <h3>Body 2</h3>
-      <label>Mass (M☉) <input type="number" id="m1" step="0.0001"></label>
+      <label>Mass (M☉) <input type="number" id="m1" step="0.000001"></label>
       <label>x (AU) <input type="number" id="x1" step="0.001"></label>
       <label>y (AU) <input type="number" id="y1" step="0.001"></label>
-      <label>z (AU) <input type="number" id="z1" step="0.001" value="0"></label>
+      <label>z (AU) <input type="number" id="z1" step="0.001"></label>
       <label>vx (AU/day) <input type="number" id="vx1" step="0.0001"></label>
       <label>vy (AU/day) <input type="number" id="vy1" step="0.0001"></label>
-      <label>vz (AU/day) <input type="number" id="vz1" step="0.0001" value="0"></label>
+      <label>vz (AU/day) <input type="number" id="vz1" step="0.0001"></label>
     </div>
     <div class="card">
       <h3>Body 3</h3>
-      <label>Mass (M☉) <input type="number" id="m2" step="0.0001"></label>
+      <label>Mass (M☉) <input type="number" id="m2" step="0.000001"></label>
       <label>x (AU) <input type="number" id="x2" step="0.001"></label>
       <label>y (AU) <input type="number" id="y2" step="0.001"></label>
-      <label>z (AU) <input type="number" id="z2" step="0.001" value="0"></label>
+      <label>z (AU) <input type="number" id="z2" step="0.001"></label>
       <label>vx (AU/day) <input type="number" id="vx2" step="0.0001"></label>
       <label>vy (AU/day) <input type="number" id="vy2" step="0.0001"></label>
-      <label>vz (AU/day) <input type="number" id="vz2" step="0.0001" value="0"></label>
+      <label>vz (AU/day) <input type="number" id="vz2" step="0.0001"></label>
+    </div>
+    <div class="card">
+      <h3>Body 4 (planet)</h3>
+      <label>Mass (M☉) <input type="number" id="m3" step="0.000001"></label>
+      <label>x (AU) <input type="number" id="x3" step="0.001"></label>
+      <label>y (AU) <input type="number" id="y3" step="0.001"></label>
+      <label>z (AU) <input type="number" id="z3" step="0.001"></label>
+      <label>vx (AU/day) <input type="number" id="vx3" step="0.0001"></label>
+      <label>vy (AU/day) <input type="number" id="vy3" step="0.0001"></label>
+      <label>vz (AU/day) <input type="number" id="vz3" step="0.0001"></label>
     </div>
   </div>
 
@@ -73,11 +84,12 @@
     <div class="card">
       <h3>Presets</h3>
       <div class="preset-col">
-        <button class="btn-accent" data-preset="sun-earth-jupiter">Sun–Earth–Jupiter (scaled)</button>
-        <button data-preset="triangle">Equal-mass triangle (3D variant)</button>
-        <button data-preset="figure8">Choreography — figure-eight (in-plane)</button>
+        <button class="btn-accent" data-preset="tristar-planet">Tri-star + planet (default)</button>
+        <button data-preset="sun-earth-jupiter">Sun–Earth–Jupiter (+ test particle)</button>
+        <button data-preset="triangle">Equal-mass triangle (+ test planet)</button>
+        <button data-preset="figure8">Figure-eight (+ test planet)</button>
       </div>
-      <p class="muted">Units: AU, AU/day, M☉. Z inputs enable true 3D motion.</p>
+      <p class="muted">Units: AU, AU/day, M☉. Planet initially orbits Body 2.</p>
     </div>
     <div class="card">
       <h3>Diagnostics / JSON</h3>

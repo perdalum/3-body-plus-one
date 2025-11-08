@@ -1,23 +1,30 @@
-// ui.js — inputs, buttons, HUD, tests
 export const $ = id => document.getElementById(id);
 
 export function bindInputs(params) {
-    ['m0','m1','m2'].forEach((id,i)=> $(id).value = params.masses[i]);
-    ['x0','x1','x2'].forEach((id,i)=> $(id).value = params.pos[i][0]);
-    ['y0','y1','y2'].forEach((id,i)=> $(id).value = params.pos[i][1]);
-    ['z0','z1','z2'].forEach((id,i)=> $(id).value = params.pos[i][2]);
-    ['vx0','vx1','vx2'].forEach((id,i)=> $(id).value = params.vel[i][0]);
-    ['vy0','vy1','vy2'].forEach((id,i)=> $(id).value = params.vel[i][1]);
-    ['vz0','vz1','vz2'].forEach((id,i)=> $(id).value = params.vel[i][2]);
-    $('timescale').value = params.timeScale;
-    $('traillen').value = params.trailLen;
-    $('softening').value = params.softening;
+    const n = params.masses.length;
+    for (let i=0;i<n;i++){
+        const s = String(i);
+        ['m'+s,'x'+s,'y'+s,'z'+s,'vx'+s,'vy'+s,'vz'+s].forEach(id => {
+            if (!$(id)) return;
+        });
+        if ($('m'+s)) $('m'+s).value = params.masses[i];
+        if ($('x'+s)) $('x'+s).value = params.pos[i][0];
+        if ($('y'+s)) $('y'+s).value = params.pos[i][1];
+        if ($('z'+s)) $('z'+s).value = params.pos[i][2];
+        if ($('vx'+s)) $('vx'+s).value = params.vel[i][0];
+        if ($('vy'+s)) $('vy'+s).value = params.vel[i][1];
+        if ($('vz'+s)) $('vz'+s).value = params.vel[i][2];
+    }
+    if ($('timescale')) $('timescale').value = params.timeScale;
+    if ($('traillen')) $('traillen').value = params.trailLen;
+    if ($('softening')) $('softening').value = params.softening;
 }
 
 export function readInputsIntoParams(params) {
-    params.masses = ['m0','m1','m2'].map(id=> parseFloat($(id).value));
-    params.pos = [0,1,2].map(i=> [parseFloat($('x'+i).value), parseFloat($('y'+i).value), parseFloat($('z'+i).value)]);
-    params.vel = [0,1,2].map(i=> [parseFloat($('vx'+i).value), parseFloat($('vy'+i).value), parseFloat($('vz'+i).value)]);
+    const n = params.masses.length;
+    params.masses = Array.from({length:n}, (_,i)=> parseFloat($('m'+i).value));
+    params.pos = Array.from({length:n}, (_,i)=> [parseFloat($('x'+i).value), parseFloat($('y'+i).value), parseFloat($('z'+i).value)]);
+    params.vel = Array.from({length:n}, (_,i)=> [parseFloat($('vx'+i).value), parseFloat($('vy'+i).value), parseFloat($('vz'+i).value)]);
     params.timeScale = parseFloat($('timescale').value);
     params.trailLen = parseInt($('traillen').value);
     params.softening = parseFloat($('softening').value);
@@ -33,13 +40,11 @@ export function wireHUD({ onPause, onReset, onPreset, onTimescale, onTraillen, o
     document.querySelectorAll('[data-preset]').forEach(btn =>
         btn.addEventListener('click', e => onPreset(e.currentTarget.dataset.preset))
     );
-
     const toggleBtn = $('togglePanel'); const dashboard = $('dashboard');
     toggleBtn.addEventListener('click', () => {
         dashboard.classList.toggle('hidden');
         toggleBtn.textContent = dashboard.classList.contains('hidden') ? 'Show Controls' : 'Hide Controls';
     });
-
     $('selftest').addEventListener('click', onSelfTest);
 }
 
