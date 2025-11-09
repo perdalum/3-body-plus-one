@@ -6,7 +6,7 @@ Triggered by The Three-Body Problem by [Liu Cixin](https://en.wikipedia.org/wiki
 
 Nothing is guaranteed to work besides it being pretty and fun.
 
-[A screenshot](3-body.png)
+![A screenshot](3-body.png)
 
 ## Future Work
 
