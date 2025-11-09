@@ -1,138 +1,27 @@
+# "Simulation" of three-body system with a fourth body, e.g., a planet.
 
-```json
-{
-  "masses": [
-    1,
-    0.003003,
-    0.0011447999999999999
-  ],
-"pos": [
-[
-0,
-0,
-0
-],
-[
-1,
-0,
-0
-],
-[
-5.2,
-0,
-0
-]
-],
-"vel": [
-[
-0,
-0,
-0
-],
-[
-0,
-0.018920000000000003,
-0
-],
-[
-0,
-0.008140000000000001,
-0
-]
-],
-"softening": 0.000001
-}
-```
+Heavily inspired by https://github.com/kirklong/ThreeBodyBot and their Mastodon bot at https://mastodon.social/@threebodybot@mathstodon.xyz.
+
+Triggered by The Three-Body Problem by [Liu Cixin](https://en.wikipedia.org/wiki/Liu_Cixin), but been slowly growing for decades...
+
+Nothing is guaranteed to work besides it being pretty and fun.
+
+## Future Work
+
+- Ensure that the physics checks out...
 
 
-```json
-{
-  "masses": [
-    1,
-    0.024003,
-    0.0011447999999999999
-  ],
-  "pos": [
-    [
-      0,
-      0,
-      0
-    ],
-    [
-      1,
-      0,
-      0
-    ],
-    [
-      5.2,
-      0,
-      0
-    ]
-  ],
-  "vel": [
-    [
-      0,
-      0,
-      0
-    ],
-    [
-      0,
-      0.018920000000000003,
-      0
-    ],
-    [
-      0,
-      0.008140000000000001,
-      0
-    ]
-  ],
-  "softening": 0.00053158
-}
-```
+## Motivation and TIL
 
-Dans:
+- the javascript stack
+- the javascript language
+- git branching
+- WebStorm
+- using LLM for dev work
 
-```json
-{
-  "masses": [
-    1,
-    0.001003,
-    0.5
-  ],
-  "pos": [
-    [
-      0,
-      0,
-      0
-    ],
-    [
-      1,
-      0,
-      0
-    ],
-    [
-      5.2,
-      0,
-      0
-    ]
-  ],
-  "vel": [
-    [
-      0,
-      0,
-      0
-    ],
-    [
-      0,
-      0.018920000000000003,
-      0
-    ],
-    [
-      0,
-      0.008140000000000001,
-      0
-    ]
-  ],
-  "softening": 0.00053158
-}
-```
+Read more at [Vibe scratching an old itch -- the three-body problem](https://moldrup-dalum.dk/per/output/2025-11-09--3-body.html)
+
+## Third-party components used:
+- three.js (https://threejs.org)
+  Copyright © 2010-2025 three.js authors
+  Licensed under the MIT License (see ./vendor/three.module.js)
