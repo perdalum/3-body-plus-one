@@ -9,6 +9,7 @@ Nothing is guaranteed to work besides it being pretty and fun.
 ## Future Work
 
 - Ensure that the physics checks out...
+- Better visuals, improve how the bodies are drawn and make it easier to differentiate between them. Also, I suspect the relative sizes of the bodies are wrong.
 
 
 ## Motivation and TIL
