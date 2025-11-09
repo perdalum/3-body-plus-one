@@ -1,0 +1,62 @@
+{
+  "version": "1.0",
+  "presets": {
+    "realistic": {
+      "label": "Realistic",
+      "scaling": {
+        "au_to_scene": 200.0,
+        "core_scale_factor": 0.01,
+        "shell_radius_au": 0.1,
+        "min_visible_radius": 0.005,
+        "max_visible_radius": 0.6,
+        "gamma": 0.9
+      },
+      "materials": {
+        "stars": { "opacity": 0.35, "roughness": 0.35, "metalness": 0.1, "clearcoat": 0.3, "emissive_intensity": 0.55 },
+        "cores": { "opacity": 1.0, "roughness": 0.2, "metalness": 0.0, "emissive_intensity": 0.9 },
+        "planet": { "opacity": 1.0, "roughness": 0.4, "metalness": 0.2, "emissive_intensity": 0.4 }
+      },
+      "lighting": { "ambient_intensity": 0.5, "key_light_intensity": 1.2, "fill_light_intensity": 0.6, "bloom_strength": 0.6, "bloom_radius": 0.9, "bloom_threshold": 0.2 },
+      "starfield": { "count": 14000, "canvas_size": [4096, 2048], "brightness_variation": 0.4 }
+    },
+
+    "cinematic": {
+      "label": "Cinematic",
+      "scaling": {
+        "au_to_scene": 260.0,
+        "core_scale_factor": 0.006,
+        "shell_radius_au": 0.18,
+        "min_visible_radius": 0.01,
+        "max_visible_radius": 0.8,
+        "gamma": 0.8
+      },
+      "materials": {
+        "stars": { "opacity": 0.28, "roughness": 0.25, "metalness": 0.05, "clearcoat": 0.5, "emissive_intensity": 0.75 },
+        "cores": { "opacity": 1.0, "roughness": 0.15, "metalness": 0.0, "emissive_intensity": 1.0 },
+        "planet": { "opacity": 1.0, "roughness": 0.35, "metalness": 0.25, "emissive_intensity": 0.5 }
+      },
+      "lighting": { "ambient_intensity": 0.6, "key_light_intensity": 1.6, "fill_light_intensity": 0.9, "bloom_strength": 0.9, "bloom_radius": 1.1, "bloom_threshold": 0.15 },
+      "starfield": { "count": 18000, "canvas_size": [4096, 2048], "brightness_variation": 0.5 }
+    },
+
+    "schematic": {
+      "label": "Schematic",
+      "scaling": {
+        "au_to_scene": 160.0,
+        "core_scale_factor": 0.004,
+        "shell_radius_au": 0.05,
+        "min_visible_radius": 0.02,
+        "max_visible_radius": 0.5,
+        "gamma": 1.0
+      },
+      "materials": {
+        "stars": { "opacity": 0.22, "roughness": 0.5, "metalness": 0.0, "clearcoat": 0.0, "emissive_intensity": 0.4 },
+        "cores": { "opacity": 1.0, "roughness": 0.6, "metalness": 0.0, "emissive_intensity": 0.6 },
+        "planet": { "opacity": 1.0, "roughness": 0.6, "metalness": 0.0, "emissive_intensity": 0.2 }
+      },
+      "lighting": { "ambient_intensity": 0.4, "key_light_intensity": 0.9, "fill_light_intensity": 0.5, "bloom_strength": 0.3, "bloom_radius": 0.7, "bloom_threshold": 0.25 },
+      "starfield": { "count": 9000, "canvas_size": [2048, 1024], "brightness_variation": 0.3 }
+    }
+  },
+  "default_preset": "realistic"
+}

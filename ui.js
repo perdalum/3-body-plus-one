@@ -4,9 +4,6 @@ export function bindInputs(params) {
     const n = params.masses.length;
     for (let i=0;i<n;i++){
         const s = String(i);
-        ['m'+s,'x'+s,'y'+s,'z'+s,'vx'+s,'vy'+s,'vz'+s].forEach(id => {
-            if (!$(id)) return;
-        });
         if ($('m'+s)) $('m'+s).value = params.masses[i];
         if ($('x'+s)) $('x'+s).value = params.pos[i][0];
         if ($('y'+s)) $('y'+s).value = params.pos[i][1];
@@ -30,7 +27,7 @@ export function readInputsIntoParams(params) {
     params.softening = parseFloat($('softening').value);
 }
 
-export function wireHUD({ onPause, onReset, onPreset, onTimescale, onTraillen, onSoftening, onCopyJSON, onSelfTest }) {
+export function wireHUD({ onPause, onReset, onPreset, onTimescale, onTraillen, onSoftening, onCopyJSON, onSelfTest, onVisualPreset }) {
     $('pause').addEventListener('click', onPause);
     $('reset').addEventListener('click', onReset);
     $('timescale').addEventListener('input', onTimescale);
@@ -46,6 +43,21 @@ export function wireHUD({ onPause, onReset, onPreset, onTimescale, onTraillen, o
         toggleBtn.textContent = dashboard.classList.contains('hidden') ? 'Show Controls' : 'Hide Controls';
     });
     $('selftest').addEventListener('click', onSelfTest);
+
+    const vp = $('visualPreset');
+    if (vp && onVisualPreset) vp.addEventListener('change', () => onVisualPreset(vp.value));
+}
+
+export function populateVisualPresetOptions(presets, defaultKey){
+    const vp = $('visualPreset'); if (!vp) return;
+    vp.innerHTML = '';
+    Object.entries(presets).forEach(([key, def]) => {
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = def.label || key;
+        if (key === defaultKey) opt.selected = true;
+        vp.appendChild(opt);
+    });
 }
 
 export function setEnergyText(val) {

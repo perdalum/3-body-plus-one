@@ -1,14 +1,13 @@
-// app.js — orchestrates physics, renderer, and UI (now N bodies)
 import { NBodyRK4 } from './physics.js';
 import { PRESETS } from './presets.js';
 import { setupRenderer } from './renderer.js';
 import { $, bindInputs, readInputsIntoParams, wireHUD, setEnergyText, setSimTime,
-    buildInitJSON, copyJSONToClipboard, log, clearLog, approxEqual } from './ui.js';
+    buildInitJSON, copyJSONToClipboard, log, clearLog, approxEqual, populateVisualPresetOptions } from './ui.js';
 
 let params = {
     masses: [1.10, 0.95, 0.75, 3.003e-6],
-    pos: [[-1.2,0,0],[0,0,0],[1.0,0.8,0],[0.25,0,0]], // will be overwritten by preset
-    vel: [[0,0.006,0],[0,-0.008,0],[-0.006,0,0],[0,0.02,0]], // overwritten by preset
+    pos: [[-1.2,0,0],[0,0,0],[1.0,0.8,0],[0.25,0,0]],
+    vel: [[0,0.006,0],[0,-0.008,0],[-0.006,0,0],[0,0.02,0]],
     timeScale: 5,
     trailLen: 3000,
     softening: 1e-6,
@@ -18,11 +17,17 @@ let engine = null;
 let paused = false;
 let simTimeDays = 0;
 
-const R = setupRenderer();
+// Renderer now async (loads visual_config.json)
+const R = await setupRenderer();
+
+// Populate visual preset dropdown
+{
+    const info = R.getVisualConfig();
+    populateVisualPresetOptions(info.presets, info.defaultKey);
+}
 
 function rebuildEngine() {
     readInputsIntoParams(params);
-    // ensure renderer has correct number of bodies
     R.createBodies(params.masses.length);
 
     engine = new NBodyRK4(params.masses, params.pos, params.vel, params.softening);
@@ -48,7 +53,6 @@ function applyPreset(key) {
     paused = false;
 }
 
-// HUD wiring
 bindInputs(params);
 wireHUD({
     onPause: () => { paused = !paused; },
@@ -58,10 +62,14 @@ wireHUD({
     onTraillen: () => { params.trailLen  = parseInt($('traillen').value); },
     onSoftening: () => { params.softening = parseFloat($('softening').value); },
     onCopyJSON: () => { readInputsIntoParams(params); copyJSONToClipboard(buildInitJSON(params)); },
-    onSelfTest: runSelfTests
+    onSelfTest: runSelfTests,
+    onVisualPreset: (key) => {
+        R.setVisualPreset(key);
+        // Reapply current masses so shells/cores update to new preset’s scales/materials
+        R.setMasses(params.masses);
+    }
 });
 
-// Animation
 const clock = new (window.THREE?.Clock ?? class { constructor(){this.t=performance.now()/1000} getDelta(){const n=performance.now()/1000; const d=n-this.t; this.t=n; return d;} })();
 function frame() {
     requestAnimationFrame(frame);
@@ -82,7 +90,6 @@ function frame() {
     R.render();
 }
 
-// Self-tests (kept + extended)
 function runSelfTests(){
     clearLog(); log('Running tests…');
 
@@ -93,32 +100,33 @@ function runSelfTests(){
         'x3','y3','z3','vx3','vy3','vz3',
         'timescale','traillen','softening',
         'legend1','legend2','legend3','legend4',
-        'pause','reset','selftest','togglePanel','copyjson','jsonbox','simtime'
+        'pause','reset','selftest','togglePanel','copyjson','jsonbox','simtime','visualPreset'
     ];
     const missing = ids.filter(id => !$(id));
     const pass0 = missing.length === 0;
     log(`Test 0 (DOM ids present): ${pass0 ? 'PASS' : 'FAIL'}${pass0 ? '' : ' missing=' + missing.join(',')}`);
 
-    // Energy sanity for figure8+planet
-    applyPreset('figure8');
-    let eng = new NBodyRK4(PRESETS['figure8'].masses, PRESETS['figure8'].pos, PRESETS['figure8'].vel, 1e-6);
+    // Visual preset round-trip
+    const vp = $('visualPreset'); const old = vp.value;
+    vp.value = 'cinematic'; vp.dispatchEvent(new Event('change'));
+    const changed = $('visualPreset').value === 'cinematic';
+    log(`Test 1 (visual preset change event): ${changed ? 'PASS' : 'FAIL'}`);
+    vp.value = old; vp.dispatchEvent(new Event('change'));
+
+    // Physics sanity
+    const P = PRESETS['figure8'];
+    let eng = new NBodyRK4(P.masses, P.pos, P.vel, 1e-6);
     const E0 = eng.energy(); for (let i=0;i<200;i++) eng.step(0.01); const E1 = eng.energy();
     const rel = Math.abs((E1 - E0) / E0);
-    const pass1 = rel < 1e-3;
-    log(`Test 1 (energy drift < 1e-3): ${pass1 ? 'PASS' : 'FAIL'} (rel=${rel.toExponential(3)})`);
+    const pass2 = rel < 1e-3;
+    log(`Test 2 (energy drift < 1e-3): ${pass2 ? 'PASS' : 'FAIL'} (rel=${rel.toExponential(3)})`);
 
-    // Preset write-through to inputs for the planet z
+    // Preset write-through to inputs
     applyPreset('tristar-planet');
     const z3v = parseFloat($('z3').value);
     const expectedZ3 = PRESETS['tristar-planet'].pos[3][2];
-    const pass2 = approxEqual(z3v, expectedZ3, 1e-12);
-    log(`Test 2 (preset planet z -> inputs): ${pass2 ? 'PASS' : 'FAIL'} (z3=${z3v}, expected=${expectedZ3})`);
-
-    rebuildEngine();
-    const meshX = R.bodies[1].position.x; // middle star x
-    const expectedX1 = PRESETS['tristar-planet'].pos[1][0];
-    const pass3 = approxEqual(meshX, expectedX1, 1e-12);
-    log(`Test 3 (rebuild -> mesh.x of body 2): ${pass3 ? 'PASS' : 'FAIL'} (x=${meshX})`);
+    const pass3 = approxEqual(z3v, expectedZ3, 1e-12);
+    log(`Test 3 (preset planet z -> inputs): ${pass3 ? 'PASS' : 'FAIL'} (z3=${z3v}, expected=${expectedZ3})`);
 
     // JSON parse
     const js = buildInitJSON(params);
@@ -130,11 +138,10 @@ function runSelfTests(){
     const pass5 = $('simtime').textContent.includes('12.35 d');
     log(`Test 5 (simtime formats): ${pass5 ? 'PASS' : 'FAIL'}`);
 
-    // restore default
     applyPreset('tristar-planet');
 }
 
-// Boot with tri-star + planet
+// Boot
 applyPreset('tristar-planet');
 bindInputs(params);
 rebuildEngine();

@@ -4,8 +4,28 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Four-Body (Tri-star + Planet) — Plain JS + three.js</title>
-  <link rel="preconnect" href="https://esm.sh">
-  <link rel="stylesheet" href="./3body.css">
+  <link rel="stylesheet" href="./styles.css">
+
+<!-- Import map for local, vendored three.js modules (Plan B: no CDN/TLS) -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.js",
+    "three/examples/jsm/controls/OrbitControls.js": "./vendor/examples/jsm/controls/OrbitControls.js",
+    "three/examples/jsm/postprocessing/EffectComposer.js": "./vendor/examples/jsm/postprocessing/EffectComposer.js",
+    "three/examples/jsm/postprocessing/RenderPass.js": "./vendor/examples/jsm/postprocessing/RenderPass.js",
+    "three/examples/jsm/postprocessing/UnrealBloomPass.js": "./vendor/examples/jsm/postprocessing/UnrealBloomPass.js",
+    "three/examples/jsm/postprocessing/Pass.js": "./vendor/examples/jsm/postprocessing/Pass.js",
+    "three/examples/jsm/postprocessing/ShaderPass.js": "./vendor/examples/jsm/postprocessing/ShaderPass.js",
+    "three/examples/jsm/postprocessing/MaskPass.js": "./vendor/examples/jsm/postprocessing/MaskPass.js",
+    "three/examples/jsm/postprocessing/ClearPass.js": "./vendor/examples/jsm/postprocessing/ClearPass.js",
+    "three/examples/jsm/shaders/CopyShader.js": "./vendor/examples/jsm/shaders/CopyShader.js",
+    "three/examples/jsm/shaders/ConvolutionShader.js": "./vendor/examples/jsm/shaders/ConvolutionShader.js",
+    "three/examples/jsm/shaders/LuminosityHighPassShader.js": "./vendor/examples/jsm/shaders/LuminosityHighPassShader.js"
+  }
+}
+</script>
+  
 </head>
 <body>
 <div id="app"></div>
@@ -26,6 +46,7 @@
   </div>
 
   <div class="row">
+    <!-- Body cards unchanged ... -->
     <div class="card">
       <h3>Body 1</h3>
       <label>Mass (M☉) <input type="number" id="m0" step="0.000001"></label>
@@ -74,6 +95,11 @@
       <label>Time scale (×) <input type="range" id="timescale" min="0.1" max="50" step="0.1"></label>
       <label>Trail length <input type="range" id="traillen" min="100" max="10000" step="50"></label>
       <label>Softening (AU) <input type="range" id="softening" min="0.00000001" max="0.001" step="0.00000001"></label>
+      <label>Visual Preset
+        <select id="visualPreset">
+          <!-- options injected from JSON at runtime -->
+        </select>
+      </label>
       <div class="btn-row">
         <button id="pause">Pause/Resume</button>
         <button id="reset">Reset (apply edits)</button>
