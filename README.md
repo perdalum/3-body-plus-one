@@ -25,3 +25,5 @@ Read more at [Vibe scratching an old itch -- the three-body problem](https://mol
 - three.js (https://threejs.org)
   Copyright © 2010-2025 three.js authors
   Licensed under the MIT License (see ./vendor/three.module.js)
+
+Licensed under the MIT License￼ — © 2025 Per Møldrup-Dalum
