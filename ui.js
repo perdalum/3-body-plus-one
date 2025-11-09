@@ -46,6 +46,24 @@ export function wireHUD({ onPause, onReset, onPreset, onTimescale, onTraillen, o
 
     const vp = $('visualPreset');
     if (vp && onVisualPreset) vp.addEventListener('change', () => onVisualPreset(vp.value));
+
+    // --- Keyboard shortcuts ---
+    document.addEventListener('keydown', (e) => {
+        // Ignore typing inside input/textarea
+        if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+        // (H) → Toggle HUD visibility
+        if (e.key.toLowerCase() === 'h') {
+            dashboard.classList.toggle('hidden');
+            toggleBtn.textContent = dashboard.classList.contains('hidden') ? 'Show Controls' : 'Hide Controls';
+        }
+
+        // (Space) → Pause / Resume simulation
+        if (e.code === 'Space') {
+            e.preventDefault(); // prevent page scroll
+            onPause?.();
+        }
+    });
 }
 
 export function populateVisualPresetOptions(presets, defaultKey){

@@ -146,3 +146,8 @@ applyPreset('tristar-planet');
 bindInputs(params);
 rebuildEngine();
 frame();
+
+// Show one-time hint for HUD shortcut
+import { toast } from './ui.js';
+toast('Tip: Press H to hide/show the control panel');
+toast('Shortcuts: [H] hide/show controls, [Space] pause/resume');
