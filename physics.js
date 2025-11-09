@@ -78,3 +78,137 @@ export class NBodyRK4 {
         return out;
     }
 }
+
+// --- Helpers you can reuse elsewhere (AU, day, M☉) ---
+
+// Physical radius in AU based on mass (same logic as renderer, but kept in physics land)
+export function physicalRadiusAU(m){
+    const R_SUN_AU = 0.00465047;
+    const M_JUP_MSUN = 0.000954588;
+    const R_JUP_AU = R_SUN_AU * 0.10045;
+    const M_EARTH_MSUN = 3.003e-6;
+    const R_EARTH_AU = R_SUN_AU / 109.0;
+
+    if (!Number.isFinite(m) || m <= 0) m = M_EARTH_MSUN;
+    if (m >= 0.1) {                 // main-sequence-ish
+        return R_SUN_AU * Math.pow(m, 0.8);
+    } else if (m >= M_JUP_MSUN) {   // brown dwarfs/giants ~flat radius
+        const mj = m / M_JUP_MSUN;
+        return R_JUP_AU * Math.pow(mj, 0.03);
+    } else if (m >= M_EARTH_MSUN) { // rocky/icy
+        const me = m / M_EARTH_MSUN;
+        return R_EARTH_AU * Math.pow(me, 0.27);
+    } else {
+        return R_EARTH_AU * 0.5;
+    }
+}
+
+/**
+ * Detect the first pairwise collision in the current state.
+ * You can choose one of two radius models:
+ *  - { mode: 'core',    fudge: 1.2 }     → uses physical core radii (AU) * fudge
+ *  - { mode: 'vdt',     fudge: 1.0, dt } → uses |v| * dt (per body) * fudge
+ *
+ * @param {{engine:NBodyRK4, masses:number[], opts?:{mode:'core'|'vdt', fudge?:number, dt?:number}}} args
+ * @returns {null | {i:number, j:number, sep:number, minSep:number}}
+ */
+export function detectCollision({ engine, masses, opts = { mode:'core', fudge:1.2 } }) {
+    const n = masses.length;
+    const s = engine.state; // [x... y... z... vx... vy... vz...]
+    const N3 = 3 * n;
+
+    // build radii (AU) per body
+    const r = new Float64Array(n);
+    const fudge = Number.isFinite(opts.fudge) ? opts.fudge : 1.2;
+
+    if (opts.mode === 'vdt') {
+        const dt = Number.isFinite(opts.dt) ? opts.dt : 0; // caller must provide dt if using 'vdt'
+        for (let i=0;i<n;i++){
+            const vx = s[N3 + 3*i + 0], vy = s[N3 + 3*i + 1], vz = s[N3 + 3*i + 2];
+            const v  = Math.hypot(vx, vy, vz);
+            r[i] = v * dt * fudge; // AU
+        }
+    } else {
+        // 'core' model: use physical radii with a safety fudge (accounts for discrete timestep)
+        for (let i=0;i<n;i++) r[i] = physicalRadiusAU(masses[i]) * fudge;
+    }
+
+    // pairwise check (O(n^2))
+    for (let i=0;i<n;i++){
+        const xi = s[3*i], yi = s[3*i+1], zi = s[3*i+2];
+        for (let j=i+1;j<n;j++){
+            const dx = xi - s[3*j], dy = yi - s[3*j+1], dz = zi - s[3*j+2];
+            const sep = Math.hypot(dx, dy, dz);
+            const minSep = r[i] + r[j];
+            if (sep < minSep) return { i, j, sep, minSep };
+        }
+    }
+    return null;
+}
+
+
+// --- Constants (AU³ / (M☉ · day²)) ---
+export const G_AU3_MSUN_DAY2 = 2.959122082855911e-4;
+
+/**
+ * Detects if any body is exceeding local escape velocity relative to the
+ * center of mass (CM) of the *other* bodies.
+ *
+ * Uses: v_esc = sqrt(2 G M_other / r_cm) * fudge
+ *
+ * Options:
+ *  - maxSepAU:       only consider escape when the body is at least this far
+ *                    from the CM of the other bodies (reduces noise near center).
+ *  - fudge (>=1.0):  margin to account for timestep / modeling approximations.
+ *  - consecutive:    how many consecutive frames must satisfy v >= v_esc to trigger.
+ *                    (This function returns instantaneous status; the debounce lives in app.js)
+ *
+ * @param {{
+ *   engine: NBodyRK4,
+ *   masses: number[],
+ *   maxSepAU?: number,
+ *   fudge?: number
+ * }} args
+ * @returns {null | { index:number, v:number, vEsc:number, rCM:number, Mother:number }}
+ */
+export function detectEscape({ engine, masses, maxSepAU = 5.0, fudge = 1.1 }) {
+    const n = masses.length;
+    const s = engine.state; // [x... y... z... vx... vy... vz...]
+    const N3 = 3 * n;
+
+    for (let k = 0; k < n; k++) {
+        // CM of all bodies except k
+        let M = 0, cmx = 0, cmy = 0, cmz = 0;
+        for (let i = 0; i < n; i++) if (i !== k) {
+            const m = masses[i];
+            M += m;
+            cmx += m * s[3 * i + 0];
+            cmy += m * s[3 * i + 1];
+            cmz += m * s[3 * i + 2];
+        }
+        if (M <= 0) continue;
+        cmx /= M; cmy /= M; cmz /= M;
+
+        // Distance of k from CM(others)
+        const dx = s[3 * k + 0] - cmx;
+        const dy = s[3 * k + 1] - cmy;
+        const dz = s[3 * k + 2] - cmz;
+        const rCM = Math.hypot(dx, dy, dz);
+
+        // Only consider "escape" when sufficiently far from CM (reduces false triggers)
+        if (rCM < maxSepAU) continue;
+
+        // Speed of k
+        const vx = s[N3 + 3 * k + 0], vy = s[N3 + 3 * k + 1], vz = s[N3 + 3 * k + 2];
+        const v  = Math.hypot(vx, vy, vz);
+
+        // Escape speed vs CM(others)
+        const vEsc = Math.sqrt(2 * G_AU3_MSUN_DAY2 * M / Math.max(rCM, 1e-16)) * fudge;
+
+        if (v >= vEsc) {
+            return { index: k, v, vEsc, rCM, Mother: M };
+        }
+    }
+
+    return null;
+}

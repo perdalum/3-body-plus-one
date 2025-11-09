@@ -1,8 +1,10 @@
-import { NBodyRK4 } from './physics.js';
+
+import { NBodyRK4, detectCollision, detectEscape } from './physics.js';
 import { PRESETS } from './presets.js';
 import { setupRenderer } from './renderer.js';
 import { $, bindInputs, readInputsIntoParams, wireHUD, setEnergyText, setSimTime,
-    buildInitJSON, copyJSONToClipboard, log, clearLog, approxEqual, populateVisualPresetOptions } from './ui.js';
+    buildInitJSON, copyJSONToClipboard, toast, log, clearLog, approxEqual, populateVisualPresetOptions } from './ui.js';
+
 
 let params = {
     masses: [1.10, 0.95, 0.75, 3.003e-6],
@@ -12,6 +14,24 @@ let params = {
     trailLen: 3000,
     softening: 1e-6,
 };
+
+// Collision detection configuration
+const COLLISION = {
+    enabled: true,
+    mode: 'core',   // 'core' | 'vdt'
+    fudge: 1.2      // >1 gives safety margin against timestep skipping
+};
+
+// Escape detection configuration
+const ESCAPE = {
+    enabled: true,
+    maxSepAU: 5.0,     // consider escape only beyond this CM distance
+    fudge: 1.1,        // safety margin (>= 1.0)
+    consecutive: 8     // require N consecutive frames to declare escape
+};
+
+// rolling counters per body
+let escapeCounters = [0,0,0,0];
 
 let engine = null;
 let paused = false;
@@ -33,6 +53,7 @@ function rebuildEngine() {
     engine = new NBodyRK4(params.masses, params.pos, params.vel, params.softening);
     setEnergyText(engine.energy());
     simTimeDays = 0; setSimTime(simTimeDays);
+    escapeCounters = new Array(params.masses.length).fill(0);   // <— reset here
 
     R.setMasses(params.masses);
     R.setPositions(params.pos);
@@ -84,6 +105,64 @@ function frame() {
         const pos = engine.getPositions();
         R.setPositions(pos);
         for (let i=0;i<pos.length;i++) R.updateTrail(i, pos[i][0], pos[i][1], pos[i][2], params.trailLen);
+
+        // After updating positions, check for collisions
+        if (COLLISION.enabled) {
+            const hit = detectCollision({
+                engine,
+                masses: params.masses,
+                opts: (COLLISION.mode === 'vdt')
+                    ? { mode:'vdt', fudge: COLLISION.fudge, dt } // dt = per-substep size you used above
+                    : { mode:'core', fudge: COLLISION.fudge }
+            });
+            if (hit) {
+                paused = true;
+                log(`Collision detected between body ${hit.i+1} and ${hit.j+1} (sep=${hit.sep.toExponential(3)} AU, min=${hit.minSep.toExponential(3)} AU)`);
+                // optional: quick visual nudge (pulse their materials)
+                try {
+                    const gi = R.bodies[hit.i], gj = R.bodies[hit.j];
+                    gi.children?.forEach?.(child => child.material?.emissive?.offsetHSL(0, 0, 0.25));
+                    gj.children?.forEach?.(child => child.material?.emissive?.offsetHSL(0, 0, 0.25));
+                } catch {}
+                // optional UX
+                import('./ui.js').then(({ toast }) => toast(`Collision: ${hit.i+1} ↔ ${hit.j+1}. Simulation paused.`));
+            }
+        }
+
+        // --- Escape detection (after positions/trails updated) ---
+        if (ESCAPE.enabled) {
+            const esc = detectEscape({
+                engine,
+                masses: params.masses,
+                maxSepAU: ESCAPE.maxSepAU,
+                fudge: ESCAPE.fudge
+            });
+
+            // decay all counters by 1 (don’t let stale positives linger)
+            for (let i = 0; i < escapeCounters.length; i++) {
+                escapeCounters[i] = Math.max(0, escapeCounters[i] - 1);
+            }
+
+            if (esc) {
+                const k = esc.index;
+                // reinforce the candidate body
+                escapeCounters[k] = Math.min(ESCAPE.consecutive, escapeCounters[k] + 2);
+
+                if (escapeCounters[k] >= ESCAPE.consecutive) {
+                    paused = true;
+                    const days = simTimeDays.toFixed(2);
+                    log(`Escape detected: body ${k+1} at ${days} d — r_CM=${esc.rCM.toFixed(3)} AU, v=${esc.v.toExponential(3)} AU/day, v_esc=${esc.vEsc.toExponential(3)} AU/day`);
+
+                    // optional: subtle visual cue (brighten emissive briefly)
+                    try {
+                        const g = R.bodies[k];
+                        g.children?.forEach?.(child => child.material?.emissive?.offsetHSL(0, 0, 0.35));
+                    } catch {}
+
+                    toast(`Escape: body ${k+1}. Simulation paused.`);
+                }
+            }
+        }
 
         if ((performance.now() % 250) < 16) { setEnergyText(engine.energy()); setSimTime(simTimeDays); }
     }
@@ -148,6 +227,5 @@ rebuildEngine();
 frame();
 
 // Show one-time hint for HUD shortcut
-import { toast } from './ui.js';
 toast('Tip: Press H to hide/show the control panel');
 toast('Shortcuts: [H] hide/show controls, [Space] pause/resume');
